@@ -1,0 +1,5 @@
+rdflib
+matplotlib
+networkx
+requests
+black

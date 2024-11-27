@@ -1,0 +1,14 @@
+from .data import ({{ data_imports| join(', ') }})
+from typing import List, Dict, Any, Set
+from ._process import ServiceConcept, Automated, Interactive
+{%- macro printSeviceConcepts(ServiceConceptName,models) %}
+class {{ ServiceConceptName }}(ServiceConcept):
+    models: List = [
+        {% for model in models %}
+        ({%- if model['hasInput'] | length > 0 %}  {{ '{' }} {{ model['hasInput'] | join(", ")}} {{ '}' }} {% else %} set() {% endif %},{%- if model['hasOutput'] | length > 0 %}  {{ '{' }} {{ model['hasOutput'] | join(", ")}} {{ '}' }} {% else %} set() {% endif %} ),
+        {% endfor %}
+        ]
+{%- endmacro %}
+{% for service_concept in service_concepts%}
+{{ printSeviceConcepts(service_concept['name'],service_concept['models']) }}
+{% endfor %}

@@ -1,0 +1,178 @@
+from typing import List, Dict, Any, Set
+from ._data import ({{ data_imports| join(', ') }})
+{%- macro print_encode_attributes(attributes)%}
+{%- for attr in attributes %}
+{%- if attr['decode_encode'] %}
+"{{ attr['attributeName'] }}": self.{{ attr['attributeName'] }}.encode(),
+{%- else %}
+"{{ attr['attributeName'] }}": self.{{ attr['attributeName'] }},
+{%- endif %}
+{%- endfor %}
+{%- endmacro %}
+{%- macro print_decode_attributes(attributes)%}
+{%- for attr in attributes %}
+{%- if attr['decode_encode'] %}
+{{ attr['attributeName'] }}={{ attr['type'] }}.decode(data["{{ attr['attributeName'] }}"]),
+{%- else %}
+{{ attr['attributeName'] }}=data["{{ attr['attributeName'] }}"],
+{%- endif %}
+{%- endfor %}
+{%- endmacro %}
+{%- macro atomic_file(class_name, file_super_class, docs) %}
+class {{ class_name }}({{ file_super_class | sort | last }}, Atomic):
+    """{{ docs }}"""
+    url: str
+    def __init__(self, url) -> None:
+        super().__init__(url)
+
+    @classmethod
+    def decode(cls, data) -> "{{ class_name }}":
+        instance = cls(url=data['url'])
+        return instance
+
+    def encode(self) -> dict:
+        return self.__dict__
+{%- endmacro %}
+{%- macro atomic_file_with_schema(class_name, file_super_class, schema_columns, docs) %}
+class {{ class_name }}({{ file_super_class | sort | last }}, Atomic):
+    """ {{ docs }} """
+    _SCHEMA = {
+        {%- for column in schema_columns %}
+        "{{ column['schemaColumnName'] }}": {{ column['type'] }},
+        {%- endfor %}
+    }
+    url: str
+
+    def __init__(self, url) -> None:
+        super().__init__(url)
+
+    @classmethod
+    def decode(cls, data) -> "{{ class_name }}":
+        instance = cls(url=data['url'])
+        return instance
+
+    def encode(self) -> dict:
+        return {k: v for k, v in self.__dict__.items() if k[0] != "_"}
+{%- endmacro %}
+{%- macro non_atomic_hashmap(class_name, data_structure_super_class, type_parameters, docs) %}
+class {{ class_name }}({{ data_structure_super_class }}Mixin[{{ type_parameters | join(", ") }}], NonAtomic):
+    """{{ docs }}"""
+    data: Dict[{{ type_parameters | join(", ") }}]
+
+    def __init__(self) -> None:
+        self.data = {}
+
+    @classmethod
+    def decode(cls, data) -> "{{ class_name }}":
+        instance = cls()
+        for k, v in data.items():
+            instance.data[k] = {{ type_parameters[-1] }}.decode(v)
+        return instance
+
+    def encode(self) -> dict:
+        return {k: v.encode() for k, v in self.data.items()}
+{%- endmacro %}
+{%- macro non_atomic_list(class_name, data_structure_super_class, type_parameter, docs) %}
+class {{ class_name }}({{ data_structure_super_class }}Mixin[{{ type_parameter }}], NonAtomic):
+    """{{ docs }}"""
+    data: {{ data_structure_super_class }}[{{ type_parameter }}]
+
+    def __init__(self) -> None:
+        self.data = []
+
+    @classmethod
+    def decode(cls, data) -> "{{ class_name }}":
+        instance = cls()
+        for v in data:
+            instance.data.append({{ type_parameter }}.decode(v))
+        return instance
+
+    def encode(self) -> {{ data_structure_super_class }}[dict]:
+        return [v.encode() for v in self.data]
+{%- endmacro %}
+{%- macro non_atomic_class(class_name, attributes, docs) %}
+class {{ class_name }}(NonAtomic):
+    """{{ docs }}"""
+    {%- for attr in attributes %}
+    {{ attr['attributeName'] }}: {{ attr['type'] }}
+    {%- endfor %}
+
+    def __init__(self {%- for attr in attributes %}, {{ attr['attributeName'] }}: {{ attr['type'] }}{% endfor %}) -> None:
+        {%- for attr in attributes %}
+        self.{{ attr['attributeName'] }} = {{ attr['attributeName'] }}
+        {%- endfor %}
+
+    @classmethod
+    def decode(cls, data) -> "{{ class_name }}":
+        instance = cls(
+            {{ print_decode_attributes(attributes) }}
+        )
+        return instance
+
+    def encode(self) -> dict:
+        return {
+            {{ print_encode_attributes(attributes) }}
+        }
+{%- endmacro %}
+{%- macro atomic_class_with_attributes(class_name, attributes, docs) %}
+class {{ class_name }}(Atomic):
+    """{{ docs }}"""
+    {%- for attr in attributes %}
+    {{ attr['attributeName'] }}: {{ attr['type'] }}
+    {%- endfor %}
+
+    def __init__(self {%- for attr in attributes %}, {{ attr['attributeName'] }}: {{ attr['type'] }}{% endfor %}) -> None:
+        {%- for attr in attributes %}
+        self.{{ attr['attributeName'] }} = {{ attr['attributeName'] }}
+        {%- endfor %}
+
+    @classmethod
+    def decode(cls, data) -> "{{ class_name }}":
+        instance = cls(
+            {{ print_decode_attributes(attributes) }}
+        )
+        return instance
+
+    def encode(self) -> dict:
+        return self.__dict__
+{%- endmacro %}
+{%- macro primitive_class(class_name,primitive_type,super_class, docs) %}
+class {{ class_name }}({{ primitive_type }}, {{ super_class | sort | last }}Mixin, Atomic):
+    """{{ docs }}"""
+    def __init__(self, value) -> None:
+        ...
+
+    def __new__(cls, value):
+        return super().__new__(cls, value)
+    
+    @classmethod
+    def decode(cls, data) -> "{{ class_name }}":
+        return cls(data)
+    
+    def encode(self) -> {{ primitive_type }}:
+        return {{ primitive_type }}(self)
+
+{%- endmacro %}
+{%- for data_model in data_models%}
+{%- if data_model['type'] == 'ClassWithAttributes' %}
+    {%- if 'NonAtomic' in data_model['super_classes']%}
+{{ non_atomic_class(data_model['name'], data_model['attributes'], data_model['docs']) }}
+    {%- else %}
+{{ atomic_class_with_attributes(data_model['name'], data_model['attributes'], data_model['docs']) }}
+    {%- endif %}
+{%- elif data_model['type'] == 'DataStructure' %}
+    {%-if 'HashMap' in data_model['super_classes']%}
+{{ non_atomic_hashmap(data_model['name'], data_model['data_structure_superclass'], data_model['typeParameters'], data_model['docs']) }}
+    {%-else %}
+{{ non_atomic_list(data_model['name'], data_model['data_structure_superclass'], data_model['typeParameters'][0], data_model['docs']) }}
+    {%-endif %}
+{%- elif data_model['type'] == 'Primitive' %}
+{{ primitive_class(data_model['name'], data_model['primitiveType'], data_model['super_classes'], data_model['docs']) }}
+{%- elif data_model['type'] == 'AtomicFile' %}
+    {%- if 'schema' in data_model %}
+{{ atomic_file_with_schema(data_model['name'], data_model['super_classes'], data_model['schema'], data_model['docs']) }}
+    {%- else %}
+{{ atomic_file(data_model['name'], data_model['super_classes'], data_model['docs']) }}
+    {%- endif %}
+{%- endif %}
+{%- endfor %}

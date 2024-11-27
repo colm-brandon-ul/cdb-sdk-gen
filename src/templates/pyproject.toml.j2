@@ -1,0 +1,73 @@
+[project]
+name = "cdb_{{ Ontology_name }}"
+authors = [{{ '{' }}name = "Colm Brandon", email = "colm.brandon@ul.ie"{{ '}' }}]
+version = "{{ cdb_ontology_version }}+ds.{{ domain_specic_ontology_version }}.{{ code_gen_version }}"
+description = "{{ Ontology_description }}"
+readme = "README.rst"
+license = {{ '{' }}file = "LICENSE.txt"{{ '}' }}
+keywords = [{{ Ontology_keywords }}] # probably need to change this
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+requires-python = ">= 3.7" # Can potentially expand on this
+
+# possibly to be added from the codegen or cdb core
+dependencies = [
+    "requests",
+    "jinja2",
+    "jinja2-strcase",
+    "typing",
+    "dataclasses",
+    "numpy<2",
+    "minio" ,
+    "pathlib",
+    "dacite",
+    "pandas",
+    "mypy",
+    "click"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+[project.optional-dependencies]
+R = ['rpy2', 'types-tzlocal', 'mypy']
+python37 = ["typing-extensions"]
+image = ["tifffile", "pillow", "imagecodecs","types-pillow"]
+video = ["moviepy"]
+audio = ["pydub"]
+model3d = ["fbx", "numpy-stl"]
+doc = ['python-docx', 'PyPDF2', "python-pptx"]
+graph = ["networkx"]
+tabular = ["pandas"]
+text = ["json","pyyaml"]
+
+
+[project.urls] # These will need to be updated
+Homepage = "http://example.com"
+Documentation = "http://example.com"
+Repository = "http://example.com"
+"Bug Tracker" = "http://example.com"
+Changelog = "http://example.com"
+
+
+
+[project.scripts]
+cellmaps = "{{ Ontology_name }}_sdk.__main__:cli"
+
+
+[tool.setuptools.package-data]
+"{{ Ontology_name }}_sdk" = ["py.typed"]
+
+[tool.mypy]
+mypy_path = "$MYPY_CONFIG_FILE_DIR/out/{{ Ontology_name }}_sdk"
+warn_return_any = true
+warn_unused_configs = true
