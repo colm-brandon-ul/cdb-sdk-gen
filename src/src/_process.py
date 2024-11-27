@@ -1,6 +1,6 @@
 from abc import ABC as _ABC, ABCMeta as _ABCMeta, abstractmethod as _abstractmethod
 from dataclasses import dataclass as _dataclass
-from typing import Any as _Any, Callable as _Callable, Dict as _Dict, List as _List, Tuple as _Tuple, TypeVar as _TypeVar
+from typing import Any as _Any, Callable as _Callable, Dict as _Dict, List as _List, Tuple as _Tuple, TypeVar as _TypeVar, Union, get_args, get_origin
 
 from ._config import Config as _Config #type: ignore
 from .data_utils import encode_dataclass as _encode_dataclass #type: ignore
@@ -32,6 +32,14 @@ class PrepareTemplatePayload:
     base_url: str
     args: _Dict
 
+def remove_optionals(tlist):
+    def remove_optional(tp):
+        if get_origin(tp) == Union and  type(None) in get_args(tp):
+            return get_args(tp)[0]
+        return tp
+    
+    tlist = list(tlist)
+    return [remove_optional(tp) for tp in tlist]
 
 # Metaclass for enforcing type constraints
 class EnforceTypeMetaClass(_ABCMeta):
@@ -109,18 +117,18 @@ class Service(_ABC, metaclass=EnforceTypeMetaClass):
         if issubclass(self.__class__,Automated):
             # enforce that the dataflow from process input matches the keys output by data in process
             try:
-                _input.update(set(getattr(self,'process').
+                _input.update(set(remove_optionals(getattr(self,'process').
                                 __annotations__.get('input').
                                 __annotations__.get('data').
-                                __annotations__.values()))
+                                __annotations__.values())))
             except:
                 ...
 
             try:
-                _input.update(set(getattr(self,'process').
+                _input.update(set(remove_optionals(getattr(self,'process').
                                 __annotations__.get('input').
                                 __annotations__.get('workflow_parameters').
-                                __annotations__.values()))
+                                __annotations__.values())))
             except:
                 ...
 
@@ -134,10 +142,10 @@ class Service(_ABC, metaclass=EnforceTypeMetaClass):
                 ...
             
             try:
-                _output.update(set(getattr(self,'process').
+                _output.update(set(remove_optionals(getattr(self,'process').
                                 __annotations__.get('return').
                                 __annotations__.get('data').
-                                __annotations__.values()))
+                                __annotations__.values())))
                 
                 _dataflow_out.update(set(getattr(self,'process').
                                 __annotations__.get('return').
@@ -148,10 +156,10 @@ class Service(_ABC, metaclass=EnforceTypeMetaClass):
                 ...
 
             try:
-                _output.update(set(getattr(self,'process').
+                _output.update(set(remove_optionals(getattr(self,'process').
                                 __annotations__.get('return').
                                 __annotations__.get('workflow_parameters').
-                                __annotations__.values()))
+                                __annotations__.values())))
                 
                 _dataflow_out.update(set(getattr(self,'process').
                                 __annotations__.get('return').
@@ -163,18 +171,18 @@ class Service(_ABC, metaclass=EnforceTypeMetaClass):
             # Compare to any of the I/O for the segmentation tool
         elif issubclass(self.__class__,Interactive):
             try:
-                _input.update(set(getattr(self,'prepare_template').
+                _input.update(set(remove_optionals(getattr(self,'prepare_template').
                                 __annotations__.get('input').
                                 __annotations__.get('data').
-                                __annotations__.values()))
+                                __annotations__.values())))
             except:
                 ...
 
             try:
-                _input.update(set(getattr(self,'prepare_template').
+                _input.update(set(remove_optionals(getattr(self,'prepare_template').
                                 __annotations__.get('input').
                                 __annotations__.get('workflow_parameters').
-                                __annotations__.values()))
+                                __annotations__.values())))
             except:
                 ...
 
@@ -189,10 +197,10 @@ class Service(_ABC, metaclass=EnforceTypeMetaClass):
 
 
             try:
-                _output.update(set(getattr(self,'process').
+                _output.update(set(remove_optionals(getattr(self,'process').
                                 __annotations__.get('return').
                                 __annotations__.get('data').
-                                __annotations__.values()))
+                                __annotations__.values())))
                 
                 _dataflow_out.update(set(getattr(self,'process').
                                 __annotations__.get('return').
@@ -203,10 +211,10 @@ class Service(_ABC, metaclass=EnforceTypeMetaClass):
                 ...
 
             try:
-                _output.update(set(getattr(self,'process').
+                _output.update(set(remove_optionals(getattr(self,'process').
                                 __annotations__.get('return').
                                 __annotations__.get('workflow_parameters').
-                                __annotations__.values()))
+                                __annotations__.values())))
                 
                 _dataflow_out.update(set(getattr(self,'process').
                                 __annotations__.get('return').
@@ -580,7 +588,7 @@ class Interactive(Service, metaclass=EnforceTypeMetaClass):
                 base = b.__qualname__
                 break
        
-        return f'{base_url}/{self._to_kebab_case(base)}/{self._to_kebab_case(self._ROUTING_KEY)}/submit/{job_id}'
+        return f'{base_url}/ext/{self._to_kebab_case(base)}/{self._to_kebab_case(self._ROUTING_KEY)}/submit/{job_id}'
     
     def _get_front_end_url(self, base_url: str, job_id: str) -> str:
         base = ''
@@ -593,7 +601,7 @@ class Interactive(Service, metaclass=EnforceTypeMetaClass):
         # This converts the abstract concept name and the service name to lower camel case for the urls
 
 
-        return f'{base_url}/{self._to_kebab_case(base)}/{self._to_kebab_case(self._ROUTING_KEY)}/frontend/{job_id}'
+        return f'{base_url}/ext/{self._to_kebab_case(base)}/{self._to_kebab_case(self._ROUTING_KEY)}/frontend/{job_id}'
 
     @_abstractmethod
     def prepare_template(self, prefix: Prefix, submit_url: str, input) -> _Any:

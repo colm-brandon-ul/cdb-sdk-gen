@@ -5,8 +5,8 @@ import json
 import re
 import click
 
-from ._cli_utils import ServiceParser, TestGenerator, init_service_directory
-from .__init__ import __version__, __library_name__
+from ._cli_utils import ServiceParser, TestGenerator, init_service_directory, delete_cdb_labaels_with_regex
+from .__init__ import __version__, __library_name__, __detailed_version__
 from ._config import Config
 
 @click.group()
@@ -52,17 +52,11 @@ def eval(file,tests):
 
     
     # Read original dockerfile and remove old cincodebio labels
-    with open(pathlib.Path(os.getcwd()) / "Dockerfile", 'r') as df:
-        # Remove some content from the file
-        fstr = re.sub(regex, '', df.read())
-
-    # Overwrite the file with the version that has the cincodebio labels removed
-    with open(pathlib.Path(os.getcwd()) / "Dockerfile", 'w') as df:
-        df.write(fstr)
+    delete_cdb_labaels_with_regex(pathlib.Path(os.getcwd()) / "Dockerfile")
 
     # Add the new cincodebio labels
     with open(pathlib.Path(os.getcwd()) / "Dockerfile", 'a') as df:
-        df.write(f"\nLABEL cincodebio.schema='{json.dumps(dps_schema)}' \ \n cincodebio.ontology_version='{__library_name__}~{__version__}'")
+        df.write(f"\nLABEL cincodebio.schema='{json.dumps(dps_schema)}' \ \n cincodebio.ontology_version='{__library_name__}~{__detailed_version__}'")
 
     if tests:
         tg = TestGenerator(dataclass_schemas=dps_schema)
@@ -70,7 +64,7 @@ def eval(file,tests):
 
 @cli.command()
 def version():
-    click.echo(f"{__library_name__} version {__version__}")
+    click.echo(f"{__library_name__} version {__detailed_version__}")
 
 
 def validate_service_name(ctx, param, value):

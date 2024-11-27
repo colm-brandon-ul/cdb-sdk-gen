@@ -1,14 +1,16 @@
+import hashlib
 import os
 from ontparse import OWLParser
 import ast
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 import rdflib
 import enum
 from jinja2 import Environment, FileSystemLoader
-import pprint
 import black
 import pathlib
 import shutil
+import argparse
+import _config
 
 class DataModelType(str, enum.Enum):
     DataStructure = 'DataStructure'
@@ -27,8 +29,8 @@ class SdkCodeGen:
         self.processor_template = self.env.get_template('semantic_process_classes.py.j2')
         self.pyproject_template = self.env.get_template('pyproject.toml.j2')
         self.init_template = self.env.get_template('__init__.py.j2')
-        self.base_source_path = './src'
-        self.cdb_filehandlers_path = './src/_data.py'
+        self.base_source_path = f'{_config.BASE_DIR}/src'
+        self.cdb_filehandlers_path = f'{_config.BASE_DIR}/src/_data.py'
         self.service_concept_class = rdflib.URIRef('http://www.cincodebio.org/cdbontology#ServiceConcept')
         self.data_class = rdflib.URIRef('http://www.cincodebio.org/cdbontology#Data')
         self.file_class = rdflib.URIRef('http://www.cincodebio.org/cdbontology#File')
@@ -302,7 +304,7 @@ class SdkCodeGen:
         ds_version,cdb_version,ds_onto_name = self.get_version_info()
 
         base_path = pathlib.Path(os.getcwd()) / pathlib.Path("gen")
-        src_path = pathlib.Path(os.getcwd()) / pathlib.Path("src")
+        src_path = pathlib.Path(_config.BASE_DIR) / pathlib.Path("src")
         gen_src_path = base_path / 'src' / f"cdb_{ds_onto_name.lower()}"
         os.makedirs(gen_src_path,exist_ok=True)
 
@@ -338,9 +340,12 @@ class SdkCodeGen:
 
         from rdflib import Graph, OWL, DC
         # Define common version properties
+        hash_input = f"{cdb_version}+ds.{ds_version}.{_config.__version__}"
+        vhash = hashlib.md5(hash_input.encode()).hexdigest()
+        
 
-        self.pyproject_template.stream(cdb_ontology_version=cdb_version,domain_specic_ontology_version=ds_version,code_gen_version='0.0.1',Ontology_name=ds_onto_name).dump(str(base_path / 'pyproject.toml'))
-        self.init_template.stream(cdb_ontology_version=cdb_version,domain_specic_ontology_version=ds_version,code_gen_version='0.0.1',Ontology_name=ds_onto_name).dump(str(gen_src_path / '__init__.py'))
+        self.pyproject_template.stream(cdb_ontology_version=cdb_version,domain_specic_ontology_version=ds_version,code_gen_version=_config.__version__,Ontology_name=ds_onto_name,version_hash = vhash).dump(str(base_path / 'pyproject.toml'))
+        self.init_template.stream(cdb_ontology_version=cdb_version,domain_specic_ontology_version=ds_version,code_gen_version=_config.__version__,Ontology_name=ds_onto_name,version_hash = vhash).dump(str(gen_src_path / '__init__.py'))
 
         with open(base_path / 'LICENSE.txt','w') as f:
             f.write('')
@@ -348,6 +353,14 @@ class SdkCodeGen:
 
         
 if __name__ == '__main__':
-    sdk = SdkCodeGen('https://colm-brandon-ul.github.io/cellmaps/ontology/v0.0.1/cellmaps.owl')
-    sdk.generate_sdk()
+    def parse_args():
+        parser = argparse.ArgumentParser(description='Generate SDK from OWL ontology.')
+        parser.add_argument('ontology_path', type=str, help='Path to the OWL ontology file')
+        parser.add_argument('--template_path', type=str, default=f'{_config.BASE_DIR}/templates', help='Path to the Jinja2 templates directory')
+        parser.add_argument('--only_descendants_of', type=str, default=None, help='Only include descendants of this class in the ontology')
+        return parser.parse_args()
 
+    
+    args = parse_args()
+    sdk = SdkCodeGen(args.ontology_path, args.template_path, args.only_descendants_of)
+    sdk.generate_sdk()

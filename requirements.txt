@@ -1,5 +1,8 @@
+jinja2
 rdflib
 matplotlib
 networkx
 requests
 black
+build
+twine

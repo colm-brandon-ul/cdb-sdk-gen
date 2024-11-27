@@ -1,7 +1,7 @@
 [project]
 name = "cdb_{{ Ontology_name }}"
 authors = [{{ '{' }}name = "Colm Brandon", email = "colm.brandon@ul.ie"{{ '}' }}]
-version = "{{ cdb_ontology_version }}+ds.{{ domain_specic_ontology_version }}.{{ code_gen_version }}"
+version = "{{ cdb_ontology_version }}a{{ domain_specic_ontology_version | replace('.', '')  }}{{ code_gen_version | replace('.', '')  }}"
 description = "{{ Ontology_description }}"
 readme = "README.rst"
 license = {{ '{' }}file = "LICENSE.txt"{{ '}' }}
@@ -59,9 +59,8 @@ Repository = "http://example.com"
 Changelog = "http://example.com"
 
 
-
 [project.scripts]
-cellmaps = "{{ Ontology_name }}_sdk.__main__:cli"
+cdb_cellmaps = "cdb_{{ Ontology_name }}.__main__:cli"
 
 
 [tool.setuptools.package-data]

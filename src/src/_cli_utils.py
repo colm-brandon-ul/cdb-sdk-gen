@@ -10,7 +10,7 @@ import pandas as pd
 import jinja2
 
 from ._data import Atomic, NonAtomic, StringMixin, OMETIFF, CSV
-from ._data import RegionOfInterest
+from .data import RegionOfInterest
 from .data_utils import Prefix
 from . import data as cm_data
 from .__init__ import __version__, __library_name__
@@ -668,32 +668,32 @@ class TestGenerator:
 
             else:
                 
-                if issubclass(schema, _Atomic):
+                if issubclass(schema, Atomic):
                     # This is the case when there is no recursion (i.e. the dataclass contains atomic types)
                     if indent == 0:
                         prefix = Prefix(j)
                         j = 0
                     
-                    if issubclass(schema, _SinglePageTiff):
+                    if issubclass(schema, OMETIFF):
                         
                         master = schema.write(img=self.random_image_8bit(self.WIDTH_OF_IMAGE,self.HEIGHT_OF_IMAGE),image_name=f'A{j}',prefix=prefix.add_level(f'{j}') if prefix == '' else prefix)
                     
-                    elif issubclass(schema, _CSV):
+                    elif issubclass(schema, CSV):
                         print(prefix,j)
                         master = schema.write(df=self.generate_dataframe(schema._SCHEMA, self.WIDTH_OF_IMAGE, num_rows=self.NUM_OF_CELLS,N=N),filename=f'A{j}',prefix=prefix.add_level(f'{j}') if prefix == '' else prefix)
 
-                    # this is the ROI case
-                    elif issubclass(schema, ROI):
+                    # this is the RegionOfInterest case
+                    elif issubclass(schema, RegionOfInterest):
                         master = self.generate_roi(self.WIDTH_OF_IMAGE, self.HEIGHT_OF_IMAGE)
 
                     # master = schema
-                elif issubclass(schema, _NonAtomic):
+                elif issubclass(schema, NonAtomic):
                     # print(indent*'  ',schema)
                     master = {k:self.generate_test_data(v, indent=indent+1,N=N, j=k,prefix=prefix.add_level(f'{j}') if prefix == '' else prefix.add_level(f'A{j}')) for k,v in schema.__annotations__.items()}
                         
 
         except Exception as e:
-            if issubclass(schema, _StringMixin):
+            if issubclass(schema, StringMixin):
                 master = random.choice([f'A{k}' for k in range(N)])
             elif schema == int:
                 master = self.random_int(mnv=1)
@@ -1067,5 +1067,36 @@ def init_service_directory(service_name: str, process_type, aut_int: bool, pytho
         os.makedirs(base_dir / 'app' / 'templates', exist_ok=True)
         with open(base_dir / 'app' / 'templates' / 'your-template.html.j2', 'w') as f:
             f.write('')
-        
+
+import re
+def delete_cdb_labaels_with_regex(input_file):
+    """
+    Delete lines from a file that match a specific regex pattern.
     
+    Args:
+    input_file (str): Path to the input file
+    output_file (str): Path to the output file
+    pattern (str): Regex pattern to match lines for deletion
+    """
+
+    pattern = r"""(\n)*LABEL cincodebio[a-zA-Z\.='{\"_: ,[}\] ]* \\ 
+ cincodebio.ontology_version='[a-zA-Z0-9~_\.]*'"""
+    
+    try:
+        # Read the input file
+        with open(input_file, 'r') as file:
+            file_txt = file.read()
+        
+        # Filter out lines that match the pattern
+        
+
+        # Write the filtered lines to the output file
+        with open(input_file, 'w') as file:
+            file.write(re.sub(pattern, '', file_txt))
+        
+        print(f"Lines matching '{pattern}' have been deleted.")
+    
+    except FileNotFoundError:
+        print(f"Error: File {input_file} not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")

@@ -25,7 +25,9 @@ def get_minio_client():
         access_key=_Config._MINIO_ACCESS_KEY,
         secret_key=_Config._MINIO_SECRET_KEY,
         secure=False)
-        return client   
+        return client
+    else:
+        raise Exception("Minio server is not running")
 
 
 def download_stacked_tiff_locally(url,dest="temp-files"):
