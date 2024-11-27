@@ -13,7 +13,7 @@ from ._data import Atomic, NonAtomic, StringMixin, OMETIFF, CSV
 from .data import RegionOfInterest
 from .data_utils import Prefix
 from . import data as cm_data
-from .__init__ import __version__, __library_name__
+from .__init__ import __version__, __library_name__, __detailed_version__
 
 # Need to roll this code in cellmaps SDK / add cli entrypoint & finally perform mypy check from code
 
@@ -1080,7 +1080,7 @@ def delete_cdb_labaels_with_regex(input_file):
     """
 
     pattern = r"""(\n)*LABEL cincodebio[a-zA-Z\.='{\"_: ,[}\] ]* \\ 
- cincodebio.ontology_version='[a-zA-Z0-9~_\.]*'"""
+ cincodebio.ontology_version='[a-zA-Z0-9~\+_\.]*'"""
     
     try:
         # Read the input file
