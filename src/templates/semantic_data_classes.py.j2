@@ -87,7 +87,7 @@ class {{ class_name }}({{ data_structure_super_class }}Mixin[{{ type_parameter }
             instance.data.append({{ type_parameter }}.decode(v))
         return instance
 
-    def encode(self) -> {{ data_structure_super_class }}[dict]:
+    def encode(self) -> list:
         return [v.encode() for v in self.data]
 {%- endmacro %}
 {%- macro non_atomic_class(class_name, attributes, docs) %}
