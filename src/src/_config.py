@@ -9,6 +9,8 @@ class Config:
     _MINIO_HOST = os.getenv('MINIO_SERVICE_HOST')
     _MINIO_PORT = os.getenv('MINIO_SERVICE_PORT')
     _JMS_ADDRESS = f"{os.getenv('JOBS_API_SERVICE_HOST')}:{os.getenv('JOBS_API_SERVICE_PORT')}"
+    _MINIO_EXTERNAL_HOST = os.getenv('MINIO_EXTERNAL_HOST')
+    _MINIO_EXTERNAL_SECURE = os.getenv('MINIO_EXTERNAL_SECURE')
 
     # Minio Config
     _MINIO_ACCESS_KEY = os.getenv('MINIO_ACCESS_KEY')

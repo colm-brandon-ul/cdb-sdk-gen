@@ -10,6 +10,7 @@ import os
 from ._config import Config
 from ._utils import get_minio_client
 from .data_utils import Prefix
+from urllib.parse import urlparse, unquote
 
 if sys.version_info >= (3, 8):
     from typing import Protocol as Protocol
@@ -207,6 +208,14 @@ class File(HasDependencies,SyntacticData):
         :param url: Path or URL to the file
         """
         self.url: str = url
+
+    def _extract_bucket_and_file(self,url):
+        parsed_url = urlparse(url)
+        path = parsed_url.path[1:] if parsed_url.path.startswith('/') else parsed_url.path
+        bucket_name, file_path = path.split('/', 1)
+        bucket_name = unquote(bucket_name)
+        file_path = unquote(file_path)
+        return bucket_name, file_path
     
     def get_external_url(self) -> str:
         """
@@ -214,14 +223,12 @@ class File(HasDependencies,SyntacticData):
         
         :return: External URL
         """
+        
 
-        parser_external_url = urlparse(os.environ.get('CINCODEBIO_BASE_URL'))
-        parsed_url = urlparse(self.url)
+        bucket, file = self._extract_bucket_and_file(self.url)
+        client = get_minio_client(internal=False)
 
-        return parsed_url._replace(
-            netloc=parser_external_url.netloc,
-            path=str(Config._MINIO_PRESIGNED_INGRESS_PATH) + parsed_url.path # prepend the path with the minio presigned path
-            ).geturl()
+        return client.presigned_get_object('GET',bucket, file)
     
     @classmethod
     def write(cls, data, file_name: str, prefix: Prefix, rpy2: bool=False):

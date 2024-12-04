@@ -18,14 +18,23 @@ def _minio_healthcheck():
     else:
         return False 
      
-def get_minio_client():
+def get_minio_client(internal: bool = True) -> Minio:
     if _minio_healthcheck():
-        client = Minio(
-        endpoint=f"{_Config._MINIO_HOST}:{_Config._MINIO_PORT}",
-        access_key=_Config._MINIO_ACCESS_KEY,
-        secret_key=_Config._MINIO_SECRET_KEY,
-        secure=False)
-        return client
+        if internal:
+
+            client = Minio(
+            endpoint=f"{_Config._MINIO_HOST}:{_Config._MINIO_PORT}",
+            access_key=_Config._MINIO_ACCESS_KEY,
+            secret_key=_Config._MINIO_SECRET_KEY,
+            secure=False)
+            return client
+        else:
+            client = Minio(
+            endpoint=_Config._MINIO_EXTERNAL_HOST,
+            access_key=_Config._MINIO_ACCESS_KEY,
+            secret_key=_Config._MINIO_SECRET_KEY,
+            secure=True if _Config._MINIO_EXTERNAL_SECURE == "True" else False)
+            return client
     else:
         raise Exception("Minio server is not running")
 
