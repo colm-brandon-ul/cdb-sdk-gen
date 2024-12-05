@@ -1,7 +1,3 @@
-Based on the information gathered, here is a draft for the README file:
-
----
-
 # cdb-sdk-gen
 
 Repository for the cinco-de-bio domain-specific SDK code generator.
@@ -56,6 +52,3 @@ Check the [commit history](https://github.com/colm-brandon-ul/cdb-sdk-gen/commit
 
 If you wish to contribute to this project, please follow the standard GitHub workflow: fork the repository, create a new branch, make your changes, and submit a pull request.
 
----
-
-Please review the draft and let me know if any changes are needed.
