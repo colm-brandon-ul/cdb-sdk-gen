@@ -33,15 +33,14 @@ To use the `cdb-sdk-gen`, follow the instructions below:
    ```sh
    git clone https://github.com/colm-brandon-ul/cdb-sdk-gen.git
    ```
-
-2. Navigate to the project directory:
+2. Install Dependencies:
    ```sh
-   cd cdb-sdk-gen
+      # you should create a venv and activate it before doing this.
+      pip install -r requirements.txt
    ```
-
 3. Run the SDK generator:
    ```sh
-   python main.py
+   python src/sdkgen.py <ontology-url>
    ```
 
 ## Recent Changes
