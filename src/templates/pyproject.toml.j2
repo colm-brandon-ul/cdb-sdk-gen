@@ -3,6 +3,7 @@ name = "cdb_{{ Ontology_name }}"
 authors = [{{ '{' }}name = "Colm Brandon", email = "colm.brandon@ul.ie"{{ '}' }}]
 version = "{{ cdb_ontology_version }}a{{ domain_specic_ontology_version | replace('.', '')  }}{{ code_gen_version | replace('.', '')  }}"
 description = "{{ Ontology_description }}"
+readme = "README.md"
 license = {{ '{' }}file = "LICENSE.txt"{{ '}' }}
 keywords = [{{ Ontology_keywords }}] # probably need to change this
 classifiers = [
@@ -50,16 +51,16 @@ tabular = ["pandas"]
 text = ["json","pyyaml"]
 
 
-[project.urls] # These will need to be updated
-Homepage = "http://example.com"
-Documentation = "http://example.com"
-Repository = "http://example.com"
-"Bug Tracker" = "http://example.com"
-Changelog = "http://example.com"
+[project.urls] # These will need to be updated, probably should be populated from the ontology
+Homepage = "https://cincodebio.colmb.me/"
+Documentation = "https://cincodebio.colmb.me/"
+Repository = "https://cincodebio.colmb.me/"
+"Bug Tracker" = "https://cincodebio.colmb.me/"
+Changelog = "https://cincodebio.colmb.me/"
 
 
 [project.scripts]
-cdb_cellmaps = "cdb_{{ Ontology_name }}.__main__:cli"
+cdb_{{ Ontology_name}} = "cdb_{{ Ontology_name }}.__main__:cli"
 
 
 [tool.setuptools.package-data]

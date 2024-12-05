@@ -28,6 +28,7 @@ class SdkCodeGen:
         self.data_template = self.env.get_template('semantic_data_classes.py.j2')
         self.processor_template = self.env.get_template('semantic_process_classes.py.j2')
         self.pyproject_template = self.env.get_template('pyproject.toml.j2')
+        self.readme_template = self.env.get_template('README.md.j2')
         self.init_template = self.env.get_template('__init__.py.j2')
         self.base_source_path = f'{_config.BASE_DIR}/src'
         self.cdb_filehandlers_path = f'{_config.BASE_DIR}/src/_data.py'
@@ -345,10 +346,24 @@ class SdkCodeGen:
         
 
         self.pyproject_template.stream(cdb_ontology_version=cdb_version,domain_specic_ontology_version=ds_version,code_gen_version=_config.__version__,Ontology_name=ds_onto_name,version_hash = vhash).dump(str(base_path / 'pyproject.toml'))
+        
+        self.readme_template.stream(
+            project_name = f'{ds_onto_name.lower()}',
+            package_name = f'cdb_{ds_onto_name.lower()}',
+            contact_email = 'colm.brandon@ul.ie',
+            license_type = 'apache-2.0', 
+        ).dump(str(base_path / 'README.md'))
+        
         self.init_template.stream(cdb_ontology_version=cdb_version,domain_specic_ontology_version=ds_version,code_gen_version=_config.__version__,Ontology_name=ds_onto_name,version_hash = vhash).dump(str(gen_src_path / '__init__.py'))
-
+        
+        with open(pathlib.Path(self.base_source_path) / 'LICENSE.txt','r') as f:
+            license_text = f.read()
         with open(base_path / 'LICENSE.txt','w') as f:
-            f.write('')
+            f.write(license_text)
+            
+
+
+                
 
 
         
