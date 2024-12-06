@@ -223,6 +223,9 @@ class File(HasDependencies,SyntacticData):
         
         :return: External URL
         """
+
+        if Config.DEBUG:
+            return self.url
         
 
         bucket, file = self._extract_bucket_and_file(self.url)
