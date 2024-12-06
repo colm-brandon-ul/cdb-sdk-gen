@@ -289,6 +289,16 @@ class File(HasDependencies,SyntacticData):
         
         # Write data to buffer (to be implemented by specific file types)
         cls._buffer_write(data, b_out, rpy2)
+
+        # Reset buffer position to the beginning
+        b_out.seek(0)
+    
+        # Get the length of the buffer
+        b_length = b_out.getbuffer().nbytes
+    
+        # Ensure we have data to upload
+        if b_length == 0:
+            raise ValueError("No data to upload. Buffer is empty.")
         
         # Prepare upload
         bucket_name = Config._MINIO_EXPERIMENT_BUCKET
@@ -301,7 +311,7 @@ class File(HasDependencies,SyntacticData):
             object_name=full_object_name,
             data=b_out,
             num_parallel_uploads=Config._MINIO_NUM_PARALLEL_UPLOADS,
-            length=b_out.getbuffer().nbytes
+            length=b_length
         )
         
         # Return presigned URL
@@ -631,6 +641,7 @@ class OMETIFF(File):
     def _buffer_write(cls, data, buffer, rpy2: bool):
         tifffile, np = cls.deps().require('tifffile', 'numpy')
         tifffile.imwrite(buffer, np.array(data),compression='zlib')
+        
     
     @override
     def _read_local(self, rpy2: bool):
