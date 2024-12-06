@@ -4,7 +4,6 @@ import requests
 import re
 from pathlib import Path
 import uuid
-from typing import Any, List, Dict
 from ._config import Config as _Config #type: ignore
 from collections import Counter
 

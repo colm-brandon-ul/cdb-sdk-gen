@@ -143,7 +143,7 @@ def read_raw_data(ExperimentClass: _RAW, id: str = "", use_transformations: bool
         logging.warning(f'Object: {obj.object_name}')
         if not obj.is_dir:
             # check if the experiment tag matches the experiment tag of the class
-            obj_tag = min.get_object_tags(_Config._MINIO_EXPERIMENT_BUCKET, obj.object_name)
+            obj_tag = client.get_object_tags(_Config._MINIO_EXPERIMENT_BUCKET, obj.object_name)
             if obj_tag['cdb_experiment_type'] == ExperimentClass.experiment_tag:
                 # split the prefix and the file name (prefix is the experiment id)
                 prefix, file = obj.object_name.split('/')
@@ -196,7 +196,7 @@ def get_experiment_data_urls(ExperimentClass: _RAW, prefix_name: str) -> _Dict:
     # iterate over the objects for a given experiment prefix
     for obj in client.list_objects(_Config._MINIO_EXPERIMENT_BUCKET,prefix_name,include_user_meta=True):
         # iterate over the files in the ExperimentClass
-        obj_tag = min.get_object_tags(_Config._MINIO_EXPERIMENT_BUCKET, obj.object_name)
+        obj_tag = client.get_object_tags(_Config._MINIO_EXPERIMENT_BUCKET, obj.object_name)
         for f in ExperimentClass.files:
             # check if the regex matches the file and the filetype matches the cdb_file_tag
             if f.cdb_file_tag == obj_tag['cdb_file_tag'] and re.match(f.file_regex, obj.object_name.split('/')[-1]):

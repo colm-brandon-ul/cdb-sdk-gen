@@ -1,6 +1,6 @@
 from rdflib import Graph, URIRef, Literal, term, XSD
 from rdflib.namespace import RDF, RDFS, OWL
-from typing import Dict, List, Set, Tuple, Optional
+from typing import Dict, Set
 import networkx as nx
 import requests
 from urllib.parse import urlparse

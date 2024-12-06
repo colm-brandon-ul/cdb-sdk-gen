@@ -1,5 +1,5 @@
 import ast
-from typing import List, Optional
+from typing import List
 
 def get_classes_from_file(file_path: str) -> List[dict]:
     """

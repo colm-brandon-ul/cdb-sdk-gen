@@ -10,12 +10,12 @@ import os
 from ._config import Config
 from ._utils import get_minio_client
 from .data_utils import Prefix
-from urllib.parse import urlparse, unquote
+from urllib.parse import unquote
 
 if sys.version_info >= (3, 8):
     from typing import Protocol as Protocol
 else:
-    from typing_extensions import Protocol
+    pass
 
 
 K = TypeVar('K')

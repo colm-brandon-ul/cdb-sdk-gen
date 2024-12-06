@@ -1,6 +1,5 @@
 import string
 from . import data as cm_data
-import xml.etree.ElementTree as ET
 
 all_data_types = [cm for cm in dir(cm_data) if not cm.startswith('_')]
 # this is temporary due to the encoding issue with the enum values (which will be fixed)
@@ -15,7 +14,7 @@ def validate_versus_schema(o_s,out):
             validate_versus_schema(schema_value, output_value)
         # Could make this completely recursive and have a top level check for list vs dict
         elif type(schema_value) == list and type(output_value) == list:
-            assert len(schema_value) == 1, f'SCHEMA LIST CAN ONLY HAVE ONE ITEM'
+            assert len(schema_value) == 1, 'SCHEMA LIST CAN ONLY HAVE ONE ITEM'
             assert len(output_value) > 0,  f'{schema_key} is empty'
             # Checks that every item in the output list confoms to the schema
             if eval(schema_value[0]) in primitive:

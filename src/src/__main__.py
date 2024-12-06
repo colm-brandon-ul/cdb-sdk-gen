@@ -1,4 +1,3 @@
-import argparse
 import pathlib
 import os
 import json
@@ -6,7 +5,7 @@ import re
 import click
 
 from ._cli_utils import ServiceParser, TestGenerator, init_service_directory, delete_cdb_labaels_with_regex
-from .__init__ import __version__, __library_name__, __detailed_version__
+from .__init__ import __library_name__, __detailed_version__
 from ._config import Config
 
 @click.group()

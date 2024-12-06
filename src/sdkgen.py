@@ -339,7 +339,6 @@ class SdkCodeGen:
         with open(gen_src_path / 'process.py','w') as f:
             f.write(code)
 
-        from rdflib import Graph, OWL, DC
         # Define common version properties
         hash_input = f"{cdb_version}+ds.{ds_version}.{_config.__version__}"
         vhash = hashlib.md5(hash_input.encode()).hexdigest()

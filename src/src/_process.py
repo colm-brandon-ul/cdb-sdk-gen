@@ -1,12 +1,13 @@
 from abc import ABC as _ABC, ABCMeta as _ABCMeta, abstractmethod as _abstractmethod
 from dataclasses import dataclass as _dataclass
-from typing import Any as _Any, Callable as _Callable, Dict as _Dict, List as _List, Tuple as _Tuple, TypeVar as _TypeVar, Union, get_args, get_origin
+from typing import Any as _Any, Callable as _Callable, Dict as _Dict, Tuple as _Tuple, Union, get_args, get_origin
 
 from ._config import Config as _Config #type: ignore
 from .data_utils import encode_dataclass as _encode_dataclass #type: ignore
 from .data_utils import Prefix
 
-import os as _os,re as _re
+import os as _os
+import re as _re
 # import pika as _pika #type: ignore
 # from pika.exchange_type import ExchangeType as _ExchangeType #type: ignore
 import logging as _logging
@@ -383,7 +384,7 @@ class Automated(Service, metaclass=EnforceTypeMetaClass):
             prefix_path = _Path(body.job_id)
             try:
                 _os.makedirs(prefix_path)
-            except FileExistsError as e:
+            except FileExistsError:
                 # Write the dictionary to the JSON file
                 ...
             with open( prefix_path / 'process-output.json', 'w') as json_file:
@@ -518,7 +519,7 @@ class Interactive(Service, metaclass=EnforceTypeMetaClass):
             prefix_path = _Path(body.job_id)
             try:
                 _os.makedirs( prefix_path)
-            except FileExistsError as e:
+            except FileExistsError:
                 # Write the dictionary to the JSON file
                 ...
             
@@ -563,7 +564,7 @@ class Interactive(Service, metaclass=EnforceTypeMetaClass):
             prefix_path = _Path(body.job_id)
             try:
                 _os.makedirs( prefix_path)
-            except FileExistsError as e:
+            except FileExistsError:
                 # Write the dictionary to the JSON file
                 ...
 

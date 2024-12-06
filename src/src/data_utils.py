@@ -1,7 +1,6 @@
 
 from typing import Any, Optional, TypeVar, Type, Mapping, Union
 
-from ._config import Config as _Config #type: ignore
 
 _T = TypeVar("_T")
 

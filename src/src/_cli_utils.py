@@ -13,7 +13,7 @@ from ._data import Atomic, NonAtomic, StringMixin, OMETIFF, CSV
 from .data import RegionOfInterest
 from .data_utils import Prefix
 from . import data as cm_data
-from .__init__ import __version__, __library_name__, __detailed_version__
+from .__init__ import __library_name__
 
 # Need to roll this code in cellmaps SDK / add cli entrypoint & finally perform mypy check from code
 
@@ -1068,7 +1068,6 @@ def init_service_directory(service_name: str, process_type, aut_int: bool, pytho
         with open(base_dir / 'app' / 'templates' / 'your-template.html.j2', 'w') as f:
             f.write('')
 
-import re
 def delete_cdb_labaels_with_regex(input_file):
     """
     Delete lines from a file that match a specific regex pattern.
