@@ -224,7 +224,7 @@ class File(HasDependencies,SyntacticData):
         :return: External URL
         """
 
-        if Config.DEBUG:
+        if Config.DEBUG():
             return self.url
         
 
@@ -245,7 +245,7 @@ class File(HasDependencies,SyntacticData):
 
         :return: Any (see )
         """
-        if Config.DEBUG:
+        if Config.DEBUG():
             # Local file system writing
             base_path = Path("./")
             prefix_path = Path(prefix[1:]+file_name+cls.FILE_EXTENSION)
@@ -318,7 +318,7 @@ class File(HasDependencies,SyntacticData):
         
         :return: File contents or object
         """
-        if Config.DEBUG:
+        if Config.DEBUG():
             return self._read_local(rpy2)
         else:
             return self._read_remote(rpy2)
