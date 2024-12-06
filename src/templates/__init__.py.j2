@@ -1,6 +1,10 @@
 import os
+from . import data
+from . import process
 
 # Need to figure out how to populate these things automatically
-__version__ = "{{ cdb_ontology_version }}a{{ domain_specic_ontology_version | replace('.', '')  }}{{ code_gen_version | replace('.', '')  }}"
+__version__ = "{{ cdb_ontology_version }}a{{ summarised_version }}"
 __detailed_version__ = "{{ cdb_ontology_version }}+ds.{{ domain_specic_ontology_version }}.{{ code_gen_version }}" #type: ignore
 __library_name__ = 'cdb_{{ Ontology_name }}' #type: ignore
+
+__export__ = ["data", "process", "__version__", "__detailed_version__", "__library_name__"]

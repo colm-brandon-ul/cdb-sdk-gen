@@ -1,5 +1,9 @@
 from typing import List, Dict, Any, Set
+import sys
+from functools import singledispatchmethod
 from ._data import ({{ data_imports| join(', ') }})
+from typing_extensions import override
+
 {%- macro print_encode_attributes(attributes)%}
 {%- for attr in attributes %}
 {%- if attr['decode_encode'] %}
@@ -148,8 +152,13 @@ class {{ class_name }}({{ primitive_type }}, {{ super_class | sort | last }}Mixi
     @classmethod
     def decode(cls, data) -> "{{ class_name }}":
         return cls(data)
-    
-    def encode(self) -> {{ primitive_type }}:
+
+    @singledispatchmethod
+    def encode(self, encoding, errors):
+        raise NotImplementedError(f"Encoding not supported for {type(self)}")
+
+    @encode.register
+    def _(self) -> {{ primitive_type }}:
         return {{ primitive_type }}(self)
 
 {%- endmacro %}

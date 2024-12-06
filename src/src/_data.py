@@ -3,7 +3,7 @@ from io import BytesIO
 import sys
 from urllib.parse import urlparse
 import requests
-from typing import Dict, Iterable, Iterator, List, Tuple, TypeVar, Set, Generic
+from typing import Any, Dict, Iterable, Iterator, List, Tuple, TypeVar, Set, Generic, TYPE_CHECKING
 from ._deps import HasDependencies
 from pathlib import Path
 import os
@@ -12,10 +12,12 @@ from ._utils import get_minio_client
 from .data_utils import Prefix
 from urllib.parse import unquote
 
-if sys.version_info >= (3, 8):
-    from typing import Protocol as Protocol
-else:
-    pass
+
+from typing_extensions import override
+
+
+if TYPE_CHECKING:
+    ...
 
 
 K = TypeVar('K')
@@ -266,7 +268,7 @@ class File(HasDependencies,SyntacticData):
         return cls(url=url)
     
     @classmethod
-    def _write_local(cls, data, full_path,rpy2: bool):
+    def _write_local(cls, data: bytes, full_path: str ,rpy2: bool):
         """
         Default local writing method to be overridden by specific file types
         """
@@ -289,7 +291,7 @@ class File(HasDependencies,SyntacticData):
         cls._buffer_write(data, b_out, rpy2)
         
         # Prepare upload
-        bucket_name = Config.MINIO_WORKFLOW_BUCKET
+        bucket_name = Config._MINIO_EXPERIMENT_BUCKET
         client = get_minio_client()
         full_object_name = f"{prefix}{file_name}{cls.FILE_EXTENSION}"
         
@@ -306,7 +308,7 @@ class File(HasDependencies,SyntacticData):
         return client.get_presigned_url('GET', bucket_name, full_object_name)
     
     @classmethod
-    def _buffer_write(cls, data, buffer, rpy2: bool):
+    def _buffer_write(cls, data: bytes, buffer, rpy2: bool):
         """
         Method to write specific file types to buffer
         """
@@ -323,20 +325,20 @@ class File(HasDependencies,SyntacticData):
         else:
             return self._read_remote(rpy2)
     
-    def _read_local(self, rpy2: bool=False):
+    def _read_local(self, rpy2: bool=False) -> Any:
         """
         Read from local file system
         """
         raise NotImplementedError("Subclass must implement abstract method")
     
-    def _read_remote(self, rpy2: bool=False):
+    def _read_remote(self, rpy2: bool=False) -> Any:
         """
         Read from remote URL
         """
         response = requests.get(self.url)
         return self._process_remote_content(response.content, rpy2)
     
-    def _process_remote_content(self, content, rpy2: bool=False):
+    def _process_remote_content(self, content: bytes, rpy2: bool=False) -> Any:
         """
         Process remote content for specific file types
         """
@@ -349,17 +351,21 @@ class File(HasDependencies,SyntacticData):
 class FBX(File):
     FILE_EXTENSION = '.fbx'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.save(full_path)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.save(buffer)
     
+    @override
     def _read_local(self, rpy2: bool):
         fbx = self.dep.require('fbx')
         return fbx.FBX(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         fbx = self.dep.require('fbx')
         return fbx.FBX(BytesIO(content))
@@ -368,19 +374,23 @@ class FBX(File):
 class OBJ(File):
     FILE_EXTENSION = '.obj'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.save(full_path)
         ...
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.save(buffer)
         ...
     
+    @override
     def _read_local(self, rpy2: bool):
         obj = self.dep.require('objloader')
         return obj.load(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         obj = self.dep.require('objloader')
         return obj.load(BytesIO(content))
@@ -389,17 +399,21 @@ class OBJ(File):
 class STL(File):
     FILE_EXTENSION = '.stl'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.export(full_path, format='stl') 
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.export(buffer, format='stl')
     
+    @override
     def _read_local(self, rpy2: bool):
         mesh = self.dep.require('mesh')
         return mesh.Mesh.from_file(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         mesh = self.dep.require('mesh')
         return mesh.Mesh.from_file(BytesIO(content))
@@ -408,18 +422,22 @@ class STL(File):
 class AAC(File):
     FILE_EXTENSION = '.aac'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.export(full_path, format='aac')
         ...
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.export(buffer, format='aac')
     
+    @override
     def _read_local(self, rpy2: bool):
         audio = self.dep.require('pydub')
         return audio.AudioSegment.from_file(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         audio = self.dep.require('pydub')
         return audio.AudioSegment.from_file(BytesIO(content))
@@ -428,19 +446,23 @@ class AAC(File):
 class FLAC(File):
     FILE_EXTENSION = '.flac'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.export(full_path, format='flac')
 
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.export(buffer, format='flac')
 
     
+    @override
     def _read_local(self, rpy2: bool):
         pydub = self.dep.require('pydub')
         return pydub.AudioSegment.from_file(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         pydub = self.dep.require('pydub')
         return pydub.AudioSegment.from_file(BytesIO(content))
@@ -449,17 +471,22 @@ class FLAC(File):
 class MP3(File):
     FILE_EXTENSION = '.mp3'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.export(full_path, format='mp3')
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.export(buffer, format='mp3')
     
+    @override
     def _read_local(self, rpy2: bool):
         audio = self.dep.require('pydub')
         return audio.AudioSegment.from_file(self.url)
     
+    @override
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         audio = self.dep.require('pydub')
         return audio.AudioSegment.from_file(BytesIO(content))
@@ -468,17 +495,21 @@ class MP3(File):
 class OGG(File):
     FILE_EXTENSION = '.ogg'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.export(full_path, format='ogg')
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.export(buffer, format='ogg')
 
+    @override
     def _read_local(self, rpy2: bool):
         audio = self.dep.require('pydub')
         return audio.AudioSegment.from_file(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         audio = self.dep.require('pydub')
         return audio.AudioSegment.from_file(BytesIO(content))
@@ -487,19 +518,23 @@ class OGG(File):
 class WAV(File):
     FILE_EXTENSION = '.wav'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         audio = cls.deps().require('pydub')
         data.export(full_path, format='wav')
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         audio = cls.deps().require('pydub')
         data.export(buffer, format='wav')
     
+    @override
     def _read_local(self, rpy2: bool):
         audio = self.dep.require('pydub')
         return audio.AudioSegment.from_file(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         audio = self.dep.require('pydub')
         return audio.AudioSegment.from_file(BytesIO(content))
@@ -509,20 +544,24 @@ class WAV(File):
 class GML(File):
     FILE_EXTENSION = '.gml'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         nx = cls.deps().require('networkx')
         nx.write_gml(data, full_path)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         nx = cls.deps().require('networkx')
         nx.write_gml(data, buffer)
 
     
+    @override
     def _read_local(self, rpy2: bool):
         nx = self.dep.require('networkx')
         return nx.read_gml(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         nx = self.dep.require('networkx')
         return nx.read_gml(BytesIO(content))
@@ -531,19 +570,23 @@ class GML(File):
 class GraphML(File):
     FILE_EXTENSION = '.graphml'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         nx = cls.deps().require('networkx')
         nx.write_graphml(data, full_path)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         nx = cls.deps().require('networkx')
         nx.write_graphml(data, buffer)
     
+    @override
     def _read_local(self, rpy2: bool):
         nx = self.dep.require('networkx')
         return nx.read_graphml(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         nx = self.dep.require('networkx')
         return nx.read_graphml(BytesIO(content))
@@ -552,19 +595,23 @@ class GraphML(File):
 class PajekNet(File):
     FILE_EXTENSION = '.pajek.net'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         nx = cls.deps().require('networkx')
         nx.write_pajek(data, full_path)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         nx = cls.deps().require('networkx')
         nx.write_pajek(data, buffer)
     
+    @override
     def _read_local(self, rpy2: bool):
         nx = self.dep.require('networkx')
         return nx.read_pajek(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         nx = self.dep.require('networkx')
         return nx.read_pajek(BytesIO(content))
@@ -574,19 +621,23 @@ class OMETIFF(File):
     FILE_EXTENSION = '.ome.tiff'
 
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         tifffile, np = cls.deps().require('tifffile', 'numpy')
         tifffile.imwrite(full_path, np.array(data),compression='zlib')
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         tifffile, np = cls.deps().require('tifffile', 'numpy')
         tifffile.imwrite(buffer, np.array(data),compression='zlib')
     
+    @override
     def _read_local(self, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(BytesIO(content))
@@ -597,17 +648,21 @@ class OMETIFF(File):
 class DICOM(File):
     FILE_EXTENSION = '.dcm'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         ...
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         ...
     
+    @override
     def _read_local(self, rpy2: bool):
         pydicom = self.dep.require('pydicom')
         return pydicom.dcmread(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         pydicom = self.dep.require('pydicom')
         return pydicom.dcmread(BytesIO(content))
@@ -616,17 +671,21 @@ class DICOM(File):
 class BMP(File):
     FILE_EXTENSION = '.bmp'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.save(full_path, 'BMP')
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.save(buffer, 'BMP')
     
+    @override
     def _read_local(self, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(BytesIO(content))
@@ -635,17 +694,21 @@ class BMP(File):
 class GIF(File):
     FILE_EXTENSION = '.gif'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.save(full_path, 'GIF')
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.save(buffer, 'GIF')
     
+    @override
     def _read_local(self, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(BytesIO(content))
@@ -654,17 +717,21 @@ class GIF(File):
 class JPG(File):
     FILE_EXTENSION = '.jpg'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.save(full_path, 'JPEG')
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.save(buffer, 'JPEG')
     
+    @override
     def _read_local(self, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(BytesIO(content))
@@ -674,18 +741,22 @@ class JPG(File):
 class PNG(File):
     FILE_EXTENSION = '.png'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.save(full_path, 'PNG')
 
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.save(buffer, 'PNG')
     
+    @override
     def _read_local(self, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(BytesIO(content))
@@ -695,39 +766,47 @@ class PNG(File):
 class SVG(File):
     FILE_EXTENSION = '.svg'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         with open(full_path, 'w') as f:
             f.write(data)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         buffer.write(data)
     
+    @override
     def _read_local(self, rpy2: bool):
         with open(self.url, 'r') as f:
             return f.read()
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         return content.decode('utf-8')
 # TIFF
 class TIFF(File):
     FILE_EXTENSION = '.tiff'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         tifffile = cls.deps().require('tifffile')
         with tifffile.TiffWriter(full_path) as tiff:
             tiff.save(data)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         tifffile = cls.deps().require('tifffile')
         with tifffile.TiffWriter(buffer) as tiff:
             tiff.save(data)
     
+    @override
     def _read_local(self, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(self.url)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         Image = self.dep.require(('PIL','Image'))
         return Image.open(BytesIO(content))
@@ -739,6 +818,7 @@ class CSV(File):
     FILE_EXTENSION = '.csv'
 
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         pandas = cls.deps().require('pandas')
         if rpy2:
@@ -748,6 +828,7 @@ class CSV(File):
         data.to_csv(full_path, index=False)
 
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         pandas = cls.deps().require('pandas')
         if rpy2:
@@ -756,6 +837,7 @@ class CSV(File):
                 data = ro.conversion.rpy2py(data)
         data.to_csv(buffer, index=False)
 
+    @override
     def _read_local(self, rpy2: bool):
         pandas = self.dep.require('pandas')
         if rpy2:
@@ -764,6 +846,7 @@ class CSV(File):
                 return ro.conversion.py2rpy(pandas.read_csv(self.url))
         return pandas.read_csv(self.url)
 
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         pandas = self.dep.require('pandas')
         if rpy2:
@@ -778,19 +861,23 @@ class TSV(File):
     FILE_EXTENSION = '.tsv'
 
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         pandas = cls.deps().require('pandas')
         data.to_csv(full_path, sep='\t', index=False)
 
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         pandas = cls.deps().require('pandas')
         data.to_csv(buffer, sep='\t', index=False)
 
+    @override
     def _read_local(self, rpy2: bool):
         pandas = self.dep.require('pandas')
         return pandas.read_csv(self.url, sep='\t')
 
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         pandas = self.dep.require('pandas')
         return pandas.read_csv(BytesIO(content), sep='\t')
@@ -803,20 +890,24 @@ class AVI(File):
     FILE_EXTENSION = '.avi'
 
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         
         data.write_videofile(full_path)
         ...
 
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         
         data.write_videofile(buffer)
 
+    @override
     def _read_local(self, rpy2: bool):
         moviepy = self.dep.require('moviepy.editor')
         return moviepy.VideoFileClip(self.url)
 
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         moviepy = self.dep.require('moviepy.editor')
         return moviepy.VideoFileClip(BytesIO(content))
@@ -826,17 +917,21 @@ class AVI(File):
 class MOV(File):
     FILE_EXTENSION = '.mov'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         data.write_videofile(full_path )
 
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         data.write_videofile(buffer)
 
+    @override
     def _read_local(self, rpy2: bool):
         moviepy = self.dep.require('moviepy.editor')
         return moviepy.VideoFileClip(self.url)
 
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         moviepy = self.dep.require('moviepy.editor')
         return moviepy.VideoFileClip(BytesIO(content))
@@ -845,20 +940,24 @@ class MOV(File):
 class MP4(File):
     FILE_EXTENSION = '.mp4'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         
         data.write_videofile(full_path)
 
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         
         data.write_videofile(buffer)
         ...
 
+    @override
     def _read_local(self, rpy2: bool):
         moviepy = self.dep.require('moviepy.editor')
         return moviepy.VideoFileClip(self.url)
 
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         moviepy = self.dep.require('moviepy.editor')
         return moviepy.VideoFileClip(BytesIO(content))
@@ -866,21 +965,25 @@ class MP4(File):
 class MPEG(File):
     FILE_EXTENSION = '.mpeg'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         
         data.write_videofile(full_path)
         ...
 
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         
         data.write_videofile(buffer)
         ...
 
+    @override
     def _read_local(self, rpy2: bool):
         moviepy = self.dep.require('moviepy.editor')
         return moviepy.VideoFileClip(self.url)
 
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         moviepy = self.dep.require('moviepy.editor')
         return moviepy.VideoFileClip(BytesIO(content))
@@ -890,18 +993,22 @@ class MPEG(File):
 class HTML(File):
     FILE_EXTENSION = '.html'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         with open(full_path, 'w') as f:
             f.write(data)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         buffer.write(data)
     
+    @override
     def _read_local(self, rpy2: bool):
         with open(self.url, 'r') as f:
             return f.read()
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         return content.decode('utf-8')
 
@@ -909,21 +1016,25 @@ class HTML(File):
 class JSON(File):
     FILE_EXTENSION = '.json'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         json = cls.deps().require('json')
         with open(full_path, 'w') as f:
             json.dump(data, f)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         json = cls.deps().require('json')
         json.dump(data, buffer)
     
+    @override
     def _read_local(self, rpy2: bool):
         with open(self.url, 'r') as f:
             json = self.dep.require('json')
             return json.load(f)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         json = self.dep.require('json')
         return json.loads(content)
@@ -932,18 +1043,22 @@ class JSON(File):
 class MD(File):
     FILE_EXTENSION = '.md'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         with open(full_path, 'w') as f:
             f.write(data)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         buffer.write(data)
     
+    @override
     def _read_local(self, rpy2: bool):
         with open(self.url, 'r') as f:
             return f.read()
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         return content.decode('utf-8')
 
@@ -951,18 +1066,22 @@ class MD(File):
 class TXT(File):
     FILE_EXTENSION = '.txt'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         with open(full_path, 'w') as f:
             f.write(data)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         buffer.write(data)
     
+    @override
     def _read_local(self, rpy2: bool):
         with open(self.url, 'r') as f:
             return f.read()
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         return content.decode('utf-8')
 
@@ -970,39 +1089,47 @@ class TXT(File):
 class XML(File):
     FILE_EXTENSION = '.xml'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         with open(full_path, 'w') as f:
             f.write(data)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         buffer.write(data)
     
+    @override
     def _read_local(self, rpy2: bool):
         with open(self.url, 'r') as f:
             return f.read()
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         return content.decode('utf-8')
 # YAML
 class YAML(File):
     FILE_EXTENSION = '.yaml'
     @classmethod
+    @override
     def _write_local(cls, data, full_path, rpy2: bool):
         yaml = cls.deps().require('pyyaml')
         with open(full_path, 'w') as f:
             yaml.dump(data, f)
     
     @classmethod
+    @override
     def _buffer_write(cls, data, buffer, rpy2: bool):
         yaml = cls.deps().require('pyyaml')
         yaml.dump(data, buffer)
     
+    @override
     def _read_local(self, rpy2: bool):
         with open(self.url, 'r') as f:
             yaml = self.dep.require('pyyaml')
             return yaml.load(f, Loader=yaml.FullLoader)
     
+    @override
     def _process_remote_content(self, content, rpy2: bool):
         yaml = self.dep.require('pyyaml')
         return yaml.load(content, Loader=yaml.FullLoader)

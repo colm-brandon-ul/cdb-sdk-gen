@@ -6,3 +6,5 @@ requests
 black
 build
 twine
+ruff
+typing_extensions

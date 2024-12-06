@@ -255,7 +255,7 @@ class Service(_ABC, metaclass=EnforceTypeMetaClass):
     # PIKA Method for when Production (i.e. when being used as a part of CdB)
     # Launched in a new thread
     @_abstractmethod # make this type safe by adding annotations
-    def _do_work():
+    def _do_work(self):
         pass
 
     @_abstractmethod # Make this type safe also

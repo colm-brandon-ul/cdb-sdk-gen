@@ -1,7 +1,7 @@
 [project]
 name = "cdb_{{ Ontology_name }}"
 authors = [{{ '{' }}name = "Colm Brandon", email = "colm.brandon@ul.ie"{{ '}' }}]
-version = "{{ cdb_ontology_version }}a{{ domain_specic_ontology_version | replace('.', '')  }}{{ code_gen_version | replace('.', '')  }}"
+version = "{{ cdb_ontology_version }}a{{ summarised_version }}"
 description = "{{ Ontology_description }}"
 readme = "README.md"
 license = {{ '{' }}file = "LICENSE.txt"{{ '}' }}
@@ -31,7 +31,8 @@ dependencies = [
     "dacite",
     "pandas",
     "mypy",
-    "click"
+    "click",
+    "typing-extensions",
 ]
 
 [tool.setuptools.packages.find]
@@ -40,7 +41,7 @@ where = ["src"]
 
 [project.optional-dependencies]
 R = ['rpy2', 'types-tzlocal', 'mypy']
-python37 = ["typing-extensions"]
+pylt312 = ["typing-extensions"]
 image = ["tifffile", "pillow", "imagecodecs","types-pillow"]
 video = ["moviepy"]
 audio = ["pydub"]

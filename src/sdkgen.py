@@ -11,6 +11,7 @@ import pathlib
 import shutil
 import argparse
 import _config
+from utils import summarize_version
 
 class DataModelType(str, enum.Enum):
     DataStructure = 'DataStructure'
@@ -340,11 +341,16 @@ class SdkCodeGen:
             f.write(code)
 
         # Define common version properties
-        hash_input = f"{cdb_version}+ds.{ds_version}.{_config.__version__}"
-        vhash = hashlib.md5(hash_input.encode()).hexdigest()
         
 
-        self.pyproject_template.stream(cdb_ontology_version=cdb_version,domain_specic_ontology_version=ds_version,code_gen_version=_config.__version__,Ontology_name=ds_onto_name,version_hash = vhash).dump(str(base_path / 'pyproject.toml'))
+        self.pyproject_template.stream(
+            cdb_ontology_version=cdb_version,
+            domain_specic_ontology_version=ds_version,
+            code_gen_version=_config.__version__,
+            Ontology_name=ds_onto_name,
+            summarised_version = summarize_version(
+                f'{ds_version}.{_config.__version__}'
+            )).dump(str(base_path / 'pyproject.toml'))
         
         self.readme_template.stream(
             project_name = f'{ds_onto_name.lower()}',
@@ -352,8 +358,10 @@ class SdkCodeGen:
             contact_email = 'colm.brandon@ul.ie',
             license_type = 'apache-2.0', 
         ).dump(str(base_path / 'README.md'))
-        
-        self.init_template.stream(cdb_ontology_version=cdb_version,domain_specic_ontology_version=ds_version,code_gen_version=_config.__version__,Ontology_name=ds_onto_name,version_hash = vhash).dump(str(gen_src_path / '__init__.py'))
+
+        self.init_template.stream(cdb_ontology_version=cdb_version,domain_specic_ontology_version=ds_version,code_gen_version=_config.__version__,Ontology_name=ds_onto_name, summarised_version=summarize_version(
+                f'{ds_version}.{_config.__version__}'
+        )).dump(str(gen_src_path / '__init__.py'))
         
         with open(pathlib.Path(self.base_source_path) / 'LICENSE.txt','r') as f:
             license_text = f.read()
