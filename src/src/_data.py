@@ -301,7 +301,7 @@ class File(HasDependencies,SyntacticData):
             raise ValueError("No data to upload. Buffer is empty.")
         
         # Prepare upload
-        bucket_name = Config._MINIO_EXPERIMENT_BUCKET
+        bucket_name = Config._MINIO_WORKFLOW_BUCKET
         client = get_minio_client()
         full_object_name = f"{prefix}{file_name}{cls.FILE_EXTENSION}"
         
