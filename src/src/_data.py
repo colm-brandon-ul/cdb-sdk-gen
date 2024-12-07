@@ -233,7 +233,7 @@ class File(HasDependencies,SyntacticData):
         bucket, file = self._extract_bucket_and_file(self.url)
         client = get_minio_client(internal=False)
 
-        return client.presigned_get_object('GET',bucket, file)
+        return client.presigned_get_object(bucket, file)
     
     @classmethod
     def write(cls, data, file_name: str, prefix: Prefix, rpy2: bool=False):
