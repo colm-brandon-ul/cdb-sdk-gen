@@ -294,15 +294,27 @@ class Service(_ABC, metaclass=EnforceTypeMetaClass):
              # Read test contract from file
             workflow_id = _os.environ.get('CINCODEBIO_WORKFLOW_ID')
             
-            self._do_work_debug(
-                routing_key,
-                body,
-                workflow_id)
+            try:
+                self._do_work_debug(
+                    routing_key,
+                    body,
+                    workflow_id)
+            except Exception as e:
+                _logging.error(e)
         else:
             # Read the environment variables
-            self._do_work(
-                routing_key,
-                body)
+            try:
+                self._do_work(
+                    routing_key,
+                    body)
+            except Exception as e:
+                # Log the error
+                _logging.error(e)
+                # Update the job status to failed
+                # k8s will not try to re-run the job.
+                self._update_jms(
+                    job_id=_os.environ.get('CINCODEBIO_JOB_ID'),
+                    json_dict={'job_status': 'failed'})
 
 # Base class for all automated services
 
