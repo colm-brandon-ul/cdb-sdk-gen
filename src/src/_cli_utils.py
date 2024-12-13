@@ -1078,7 +1078,7 @@ def delete_cdb_labaels_with_regex(input_file):
     pattern (str): Regex pattern to match lines for deletion
     """
 
-    pattern = r"""(\n)*LABEL cincodebio[a-zA-Z\.='{\"_: ,[}\] ]* \\ 
+    pattern = r"""(\n)*LABEL cincodebio[a-zA-Z0-9\(\)\.='{\"_: ,[}\] ]* \\ 
  cincodebio.ontology_version='[a-zA-Z0-9~\+_\.]*'"""
     
     try:
