@@ -1144,3 +1144,53 @@ class YAML(File):
     def _process_remote_content(self, content, rpy2: bool):
         yaml = self.dep.require('pyyaml')
         return yaml.load(content, Loader=yaml.FullLoader)
+    
+
+class TorchScript(File):
+    FILE_EXTENSION = '.pt'
+    @classmethod
+    @override
+    def _write_local(cls, data, full_path, rpy2: bool):
+        torch = cls.deps().require('torch')
+        torch.jit.save(data, full_path)
+    
+    @classmethod
+    @override
+    def _buffer_write(cls, data, buffer, rpy2: bool):
+        torch = cls.deps().require('torch')
+        torch.jit.save(data, buffer)
+    
+    @override
+    def _read_local(self, rpy2: bool):
+        torch = self.dep.require('torch')
+        return torch.jit.load(self.url)
+    
+    @override
+    def _process_remote_content(self, content, rpy2: bool):
+        torch = self.dep.require('torch')
+        return torch.jit.load(BytesIO(content))
+    
+# class ONNX(File):
+#     FILE_EXTENSION = '.onnx'
+#     @classmethod
+#     @override
+#     def _write_local(cls, data, full_path, rpy2: bool):
+#         onnx = cls.deps().require('onnx')
+#         onnx.save(data, full_path)
+    
+#     @classmethod
+#     @override
+#     def _buffer_write(cls, data, buffer, rpy2: bool):
+#         onnx = cls.deps().require('onnx')
+#         onnx.save(data, buffer)
+    
+#     @override
+#     def _read_local(self, rpy2: bool):
+#           onnxruntime
+#         onnx = self.dep.require('onnx')
+#         return onnx.load(self.url)
+    
+#     @override
+#     def _process_remote_content(self, content, rpy2: bool):
+#         onnx = self.dep.require('onnx')
+#         return onnx.load(BytesIO(content))
